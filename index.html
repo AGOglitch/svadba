@@ -195,6 +195,224 @@
         }
 
         /* ============================================================
+           Входная страница «Вам письмо»
+           ============================================================ */
+        body.intro-open { overflow: hidden; }
+
+        .intro {
+            width: 100vw;
+            height: 100dvh;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background:
+                radial-gradient(90% 70% at 50% 0%, #fffdfa 0%, transparent 62%),
+                linear-gradient(180deg, #f6f2e8 0%, var(--cream) 70%);
+            color: var(--ink);
+            overflow: auto;
+            opacity: 1;
+            transition: opacity .6s var(--ease);
+        }
+        .intro::backdrop { background: rgba(44, 51, 46, .16); }
+        .intro[open] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .intro.is-closing { opacity: 0; }
+
+        .intro__arch {
+            position: absolute;
+            top: 38px;
+            bottom: 38px;
+            left: 50%;
+            width: min(88vw, 640px);
+            border: 1px solid rgba(74, 93, 74, .22);
+            border-bottom: 0;
+            border-radius: 320px 320px 0 0;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+        .intro__arch::before {
+            content: "";
+            position: absolute;
+            inset: 12px 12px 0;
+            border: 1px solid rgba(74, 93, 74, .11);
+            border-bottom: 0;
+            border-radius: inherit;
+        }
+
+        .intro__inner {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 620px;
+            margin: auto;
+            padding: clamp(28px, 6vh, 56px) 20px;
+            text-align: center;
+            transition: opacity .5s var(--ease), transform .6s var(--ease);
+        }
+        .intro.is-closing .intro__inner {
+            opacity: 0;
+            transform: translateY(-16px) scale(.98);
+        }
+
+        .intro__monogram {
+            margin-bottom: 22px;
+            color: var(--sage);
+            font-family: var(--serif);
+            font-size: 1.5rem;
+            letter-spacing: .08em;
+            line-height: 1;
+        }
+        .intro__monogram span {
+            margin: 0 .08em;
+            font-size: .82em;
+            font-style: italic;
+        }
+
+        .intro__title {
+            margin: 0;
+            color: var(--ink);
+            font-family: var(--serif);
+            font-size: clamp(3rem, 8vw, 4.8rem);
+            font-weight: 400;
+            letter-spacing: -.015em;
+            line-height: .98;
+        }
+        .intro__subtitle {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: .62rem;
+            font-weight: 500;
+            letter-spacing: .24em;
+            line-height: 1.6;
+            text-transform: uppercase;
+        }
+
+        .intro__envelope {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 22px;
+            margin: clamp(26px, 4vh, 38px) auto 0;
+            padding: 0;
+            border: 0;
+            border-radius: 8px;
+            background: none;
+            color: var(--sage-deep);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .intro__envelope:focus-visible {
+            outline: 2px solid var(--sage);
+            outline-offset: 14px;
+        }
+
+        .envelope {
+            position: relative;
+            width: min(72vw, 320px);
+            aspect-ratio: 1.55;
+            border: 1px solid #d8cbb5;
+            border-radius: 4px;
+            background: linear-gradient(155deg, #f7efdf 0%, #e9ddc9 100%);
+            box-shadow: 0 34px 60px -38px rgba(44, 51, 46, .65);
+            transition: transform .4s var(--ease), box-shadow .4s var(--ease);
+        }
+        .envelope__paper {
+            position: absolute;
+            top: -7px;
+            left: 7%;
+            right: 7%;
+            z-index: 1;
+            height: 60%;
+            border: 1px solid #e7dfcf;
+            border-radius: 2px;
+            background: #fffdfa;
+            transform: translateY(-5px);
+        }
+        .envelope__flap {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            border-radius: 3px 3px 0 0;
+            background: linear-gradient(180deg, #f9f2e4 0%, #eee1cc 100%);
+            clip-path: polygon(0 0, 100% 0, 50% 61%);
+        }
+        .envelope__seal {
+            position: absolute;
+            top: 58%;
+            left: 50%;
+            z-index: 3;
+            display: grid;
+            place-items: center;
+            width: 64px;
+            height: 64px;
+            border: 1px solid rgba(255, 255, 255, .28);
+            border-radius: 50%;
+            background: var(--sage);
+            box-shadow: 0 0 0 5px rgba(74, 93, 74, .12), 0 10px 20px -12px rgba(44, 51, 46, .7);
+            color: #fffdfa;
+            font-family: var(--serif);
+            font-size: 1.05rem;
+            letter-spacing: .04em;
+            transform: translate(-50%, -50%);
+            transition: transform .4s var(--ease);
+        }
+        .intro__envelope:hover .envelope {
+            transform: translateY(-7px) rotate(-1deg);
+            box-shadow: 0 44px 70px -40px rgba(44, 51, 46, .75);
+        }
+        .intro__envelope:hover .envelope__seal { transform: translate(-50%, -50%) scale(1.06); }
+
+        .intro__open-label {
+            border-bottom: 1px solid rgba(74, 93, 74, .35);
+            padding-bottom: 4px;
+            color: var(--sage-deep);
+            font-size: .68rem;
+            font-weight: 500;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            transition: border-color .2s var(--ease);
+        }
+        .intro__envelope:hover .intro__open-label { border-color: var(--sage); }
+
+        .intro__hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            max-width: 360px;
+            margin: 18px auto 0;
+            color: var(--muted);
+            font-size: .68rem;
+            line-height: 1.6;
+        }
+        .intro__hint svg {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 auto;
+            color: var(--sage);
+        }
+
+        @media (max-width: 600px) {
+            .intro__arch { top: 24px; bottom: 24px; width: 92vw; }
+            .intro__inner { padding: 24px 18px; }
+            .intro__monogram { margin-bottom: 16px; }
+            .envelope { width: min(76vw, 290px); }
+            .envelope__seal { width: 56px; height: 56px; font-size: .95rem; }
+        }
+
+        @media (max-height: 720px) {
+            .intro__monogram { margin-bottom: 12px; }
+            .intro__title { font-size: clamp(2.5rem, 6vw, 3.6rem); }
+            .intro__envelope { margin-top: 20px; gap: 16px; }
+            .envelope { width: min(62vw, 260px); }
+        }
+
+        /* ============================================================
            Кнопки
            ============================================================ */
         .btn {
@@ -882,30 +1100,15 @@
         .venue__map {
             position: relative;
             min-height: 390px;
-            background: #e9e6dc;
+            overflow: hidden;
+            background: #e9e6dc url("map.png") center bottom / cover no-repeat;
         }
-        .venue__map img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: right bottom;
-            filter: grayscale(.22) sepia(.1) saturate(.78) contrast(.97) brightness(1.02);
-        }
-        .venue__map::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            background: linear-gradient(180deg, rgba(250, 248, 243, .02) 40%, rgba(42, 53, 42, .12) 100%);
-            pointer-events: none;
-        }
+
         .venue__map-link {
             position: absolute;
             left: 16px;
             bottom: 16px;
-            z-index: 2;
+            z-index: 1000;
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -1571,6 +1774,103 @@
 
     <a class="skip-link" href="#main">Перейти к содержанию</a>
 
+    <!-- Входная страница «Вам письмо» -->
+    <dialog class="intro" id="intro" aria-labelledby="intro-title">
+        <span class="intro__arch" aria-hidden="true"></span>
+        <div class="intro__inner">
+            <p class="intro__monogram" aria-hidden="true">А <span>&amp;</span> О</p>
+            <p class="eyebrow">Приглашение на свадьбу</p>
+            <h2 class="intro__title" id="intro-title">Вам письмо</h2>
+            <p class="intro__subtitle">Антон и Ольга · 16 декабря 2026</p>
+
+            <button class="intro__envelope" id="open-invitation" type="button" aria-describedby="intro-hint" aria-label="Открыть приглашение и включить музыку">
+                <span class="envelope" aria-hidden="true">
+                    <span class="envelope__paper"></span>
+                    <span class="envelope__flap"></span>
+                    <span class="envelope__seal">А&nbsp;&amp;&nbsp;О</span>
+                </span>
+                <span class="intro__open-label">Открыть приглашение</span>
+            </button>
+
+            <p class="intro__hint" id="intro-hint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 18V5l11-2v13"/>
+                    <circle cx="6" cy="18" r="3"/>
+                    <circle cx="17" cy="16" r="3"/>
+                </svg>
+                Нажмите, чтобы открыть приглашение и включить музыку
+            </p>
+        </div>
+    </dialog>
+
+    <audio id="bg-music" src="music.mp3" preload="none" loop></audio>
+
+    <script>
+        (() => {
+            const intro = document.getElementById("intro");
+            const openButton = document.getElementById("open-invitation");
+            if (!intro || !openButton) return;
+
+            let seen = false;
+            try {
+                seen = sessionStorage.getItem("aoIntroSeen") === "1";
+            } catch (error) {
+                seen = false;
+            }
+            if (seen) return;
+
+            document.body.classList.add("intro-open");
+            if (typeof intro.showModal === "function") {
+                intro.showModal();
+            } else {
+                intro.setAttribute("open", "");
+            }
+
+            let closing = false;
+            const closeIntro = () => {
+                if (closing) return;
+                closing = true;
+
+                const audio = document.getElementById("bg-music");
+                if (audio) {
+                    audio.volume = 0.3;
+                    const playback = audio.play();
+                    if (playback && typeof playback.catch === "function") {
+                        playback.catch(() => {});
+                    }
+                }
+
+                intro.classList.add("is-closing");
+                const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                window.setTimeout(() => {
+                    if (typeof intro.close === "function") {
+                        intro.close();
+                    } else {
+                        intro.removeAttribute("open");
+                    }
+                    intro.classList.remove("is-closing");
+                    document.body.classList.remove("intro-open");
+                    try {
+                        sessionStorage.setItem("aoIntroSeen", "1");
+                    } catch (error) {
+                        /* sessionStorage может быть недоступен */
+                    }
+                    window.scrollTo(0, 0);
+                }, reduceMotion ? 0 : 650);
+            };
+
+            openButton.addEventListener("click", closeIntro);
+            intro.addEventListener("cancel", (event) => {
+                event.preventDefault();
+                closeIntro();
+            });
+            intro.addEventListener("close", () => {
+                document.body.classList.remove("intro-open");
+            });
+            openButton.focus({ preventScroll: true });
+        })();
+    </script>
+
     <!-- Шапка -->
     <header class="site-header" id="site-header">
         <div class="container header__inner">
@@ -1817,13 +2117,7 @@
                         </a>
                     </div>
 
-                    <div class="venue__map">
-                        <img
-                            src="map.png"
-                            alt="Карта: площадка «Флора», Челябинск, ул. Свободы, 155"
-                            width="650"
-                            height="450"
-                            decoding="async">
+                    <div class="venue__map" id="venue-map" role="application" aria-label="Интерактивная карта: площадка «Флора», Челябинск, улица Свободы, 155">
                         <a class="venue__map-link" href="https://yandex.ru/maps/56/chelyabinsk/?ll=61.415409%2C55.152780&amp;mode=poi&amp;poi%5Bpoint%5D=61.415227%2C55.152726&amp;poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D8111288751&amp;z=19.8" target="_blank" rel="noopener noreferrer">
                             Открыть карту
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -2040,8 +2334,6 @@
             <p class="footer__music">Музыка: Claude Debussy — «Clair de lune» · public domain</p>
         </div>
     </footer>
-
-    <audio id="bg-music" src="music.mp3" preload="none" loop></audio>
 
     <button class="music-toggle" id="music-toggle" type="button" aria-pressed="false" aria-label="Включить музыку" title="Clair de lune — Claude Debussy">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -2305,6 +2597,8 @@
                     musicToggle.setAttribute("aria-pressed", String(playing));
                     musicToggle.setAttribute("aria-label", playing ? "Выключить музыку" : "Включить музыку");
                 };
+
+                if (!music.paused) setMusicState(true);
 
                 musicToggle.addEventListener("click", async () => {
                     if (music.paused) {

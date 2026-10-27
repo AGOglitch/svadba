@@ -1044,6 +1044,157 @@
             .story__gallery .g-landscape { aspect-ratio: 16 / 10; }
         }
 
+        .story__thumb {
+            position: relative;
+            display: block;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: 0;
+            background: none;
+            cursor: zoom-in;
+        }
+        .story__thumb:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: -4px;
+        }
+        .story__thumb::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 3;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 253, 250, .92) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a5d4a' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m16 16 5 5'/%3E%3C/svg%3E") center / 18px no-repeat;
+            box-shadow: 0 10px 24px -14px rgba(44, 51, 46, .7);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(.9);
+            transition: opacity .25s var(--ease), transform .25s var(--ease);
+        }
+        .story__thumb:hover::before,
+        .story__thumb:focus-visible::before {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Лайтбокс */
+        body.lightbox-open { overflow: hidden; }
+
+        .lightbox {
+            width: 100vw;
+            height: 100dvh;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: rgba(29, 37, 30, .97);
+            color: #faf8f3;
+            overflow: hidden;
+        }
+        .lightbox::backdrop { background: rgba(16, 21, 17, .8); }
+        .lightbox[open] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox__top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px clamp(18px, 4vw, 40px);
+        }
+        .lightbox__counter {
+            color: rgba(250, 248, 243, .66);
+            font-size: .6rem;
+            font-weight: 500;
+            letter-spacing: .2em;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+        .lightbox__close,
+        .lightbox__nav {
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border: 1px solid rgba(250, 248, 243, .26);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .06);
+            color: #faf8f3;
+            cursor: pointer;
+            transition: background-color .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease);
+        }
+        .lightbox__close:hover,
+        .lightbox__nav:hover {
+            border-color: rgba(250, 248, 243, .5);
+            background: rgba(255, 255, 255, .14);
+        }
+        .lightbox__close svg { width: 18px; height: 18px; }
+        .lightbox__nav svg { width: 20px; height: 20px; }
+
+        .lightbox__stage {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 70px clamp(16px, 5vw, 80px);
+        }
+        .lightbox__figure {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 100%;
+            max-height: 100%;
+            margin: 0;
+        }
+        .lightbox__figure img {
+            display: block;
+            width: auto;
+            height: auto;
+            max-width: min(88vw, 1100px);
+            max-height: 72dvh;
+            border-radius: 3px;
+            background: #2a352a;
+            box-shadow: 0 30px 80px -40px rgba(0, 0, 0, .85);
+            object-fit: contain;
+        }
+
+        .lightbox__nav {
+            position: absolute;
+            top: 50%;
+            z-index: 2;
+            transform: translateY(-50%);
+        }
+        .lightbox__nav--prev { left: clamp(10px, 2.5vw, 32px); }
+        .lightbox__nav--next { right: clamp(10px, 2.5vw, 32px); }
+
+        .lightbox__close:focus-visible,
+        .lightbox__nav:focus-visible {
+            outline: 2px solid #faf8f3;
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 600px) {
+            .lightbox__stage { padding: 64px 10px 24px; }
+            .lightbox__figure img { max-width: 74vw; max-height: 64dvh; }
+            .lightbox__close,
+            .lightbox__nav { width: 40px; height: 40px; }
+            .lightbox__nav--prev { left: 8px; }
+            .lightbox__nav--next { right: 8px; }
+        }
+
         /* ============================================================
            Программа дня
            ============================================================ */
@@ -2238,19 +2389,29 @@
 
                 <div class="story__gallery">
                     <figure class="g-portrait g-balcony" data-reveal>
-                        <img src="photos/photo-balcony.jpg" alt="Антон и Ольга на балконе" width="1200" height="1600" loading="lazy" decoding="async">
+                        <button class="story__thumb" type="button" data-lightbox aria-label="Открыть фотографию: Антон и Ольга на балконе">
+                            <img src="photos/photo-balcony.jpg" alt="Антон и Ольга на балконе" width="1200" height="1600" loading="lazy" decoding="async">
+                        </button>
                     </figure>
                     <figure class="g-portrait g-mirror" data-reveal style="--reveal-delay:.06s">
-                        <img src="photos/photo-mirror.jpg" alt="Селфи Антона и Ольги" width="960" height="1280" loading="lazy" decoding="async">
+                        <button class="story__thumb" type="button" data-lightbox aria-label="Открыть фотографию: селфи Антона и Ольги">
+                            <img src="photos/photo-mirror.jpg" alt="Селфи Антона и Ольги" width="960" height="1280" loading="lazy" decoding="async">
+                        </button>
                     </figure>
                     <figure class="g-portrait g-palms" data-reveal style="--reveal-delay:.12s">
-                        <img src="photos/photo-palms.jpg" alt="Антон и Ольга в пальмовом саду" width="1199" height="1600" loading="lazy" decoding="async">
+                        <button class="story__thumb" type="button" data-lightbox aria-label="Открыть фотографию: Антон и Ольга в пальмовом саду">
+                            <img src="photos/photo-palms.jpg" alt="Антон и Ольга в пальмовом саду" width="1199" height="1600" loading="lazy" decoding="async">
+                        </button>
                     </figure>
                     <figure class="g-landscape g-sunset" data-reveal>
-                        <img src="photos/photo-sunset.jpg" alt="Антон и Ольга на закате" width="1600" height="905" loading="lazy" decoding="async">
+                        <button class="story__thumb" type="button" data-lightbox aria-label="Открыть фотографию: Антон и Ольга на закате">
+                            <img src="photos/photo-sunset.jpg" alt="Антон и Ольга на закате" width="1600" height="905" loading="lazy" decoding="async">
+                        </button>
                     </figure>
                     <figure class="g-landscape g-night" data-reveal style="--reveal-delay:.06s">
-                        <img src="photos/photo-night.jpg" alt="Антон и Ольга на вечерней прогулке" width="1280" height="959" loading="lazy" decoding="async">
+                        <button class="story__thumb" type="button" data-lightbox aria-label="Открыть фотографию: Антон и Ольга на вечерней прогулке">
+                            <img src="photos/photo-night.jpg" alt="Антон и Ольга на вечерней прогулке" width="1280" height="959" loading="lazy" decoding="async">
+                        </button>
                     </figure>
                 </div>
             </div>
@@ -2592,6 +2753,35 @@
         </div>
     </footer>
 
+    <dialog class="lightbox" id="lightbox" aria-label="Просмотр фотографий">
+        <div class="lightbox__top">
+            <span class="lightbox__counter" id="lightbox-counter" aria-live="polite">1 / 5</span>
+            <button class="lightbox__close" id="lightbox-close" type="button" aria-label="Закрыть просмотр">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="lightbox__stage">
+            <button class="lightbox__nav lightbox__nav--prev" id="lightbox-prev" type="button" aria-label="Предыдущая фотография">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 6l-6 6 6 6"/>
+                </svg>
+            </button>
+
+            <figure class="lightbox__figure">
+                <img id="lightbox-image" src="" alt="" draggable="false" decoding="async">
+            </figure>
+
+            <button class="lightbox__nav lightbox__nav--next" id="lightbox-next" type="button" aria-label="Следующая фотография">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6"/>
+                </svg>
+            </button>
+        </div>
+    </dialog>
+
     <script>
         (() => {
             "use strict";
@@ -2868,6 +3058,112 @@
                 music.addEventListener("error", () => {
                     musicToggle.hidden = true;
                 });
+            }
+
+            /* ---------- Лайтбокс ---------- */
+            const lightbox = $("#lightbox");
+            const lightboxImage = $("#lightbox-image");
+            const lightboxCounter = $("#lightbox-counter");
+            const lightboxClose = $("#lightbox-close");
+            const lightboxPrev = $("#lightbox-prev");
+            const lightboxNext = $("#lightbox-next");
+
+            if (lightbox && lightboxImage && lightboxCounter) {
+                const triggers = $$("[data-lightbox]");
+                const items = triggers
+                    .map((trigger) => {
+                        const image = $("img", trigger);
+                        return {
+                            src: image ? image.getAttribute("src") : "",
+                            alt: image ? (image.getAttribute("alt") || "") : ""
+                        };
+                    })
+                    .filter((item) => item.src);
+
+                let index = 0;
+                let lastTrigger = null;
+
+                const preload = (position) => {
+                    if (!items.length) return;
+                    const item = items[(position + items.length) % items.length];
+                    if (!item) return;
+                    const image = new Image();
+                    image.src = item.src;
+                };
+
+                const showPhoto = (position) => {
+                    if (!items.length) return;
+                    index = (position + items.length) % items.length;
+                    const item = items[index];
+                    lightboxImage.src = item.src;
+                    lightboxImage.alt = item.alt;
+                    lightboxCounter.textContent = `${index + 1} / ${items.length}`;
+                    preload(index + 1);
+                    preload(index - 1);
+                };
+
+                const closeLightbox = () => {
+                    if (typeof lightbox.close === "function") {
+                        lightbox.close();
+                    } else {
+                        lightbox.removeAttribute("open");
+                    }
+                };
+
+                const openLightbox = (position, trigger) => {
+                    lastTrigger = trigger || null;
+                    showPhoto(position);
+                    document.body.classList.add("lightbox-open");
+                    if (typeof lightbox.showModal === "function") {
+                        if (!lightbox.open) lightbox.showModal();
+                    } else {
+                        lightbox.setAttribute("open", "");
+                    }
+                    lightboxClose.focus({ preventScroll: true });
+                };
+
+                triggers.forEach((trigger, position) => {
+                    trigger.addEventListener("click", () => openLightbox(position, trigger));
+                });
+
+                lightboxClose.addEventListener("click", closeLightbox);
+                lightboxPrev.addEventListener("click", () => showPhoto(index - 1));
+                lightboxNext.addEventListener("click", () => showPhoto(index + 1));
+
+                lightbox.addEventListener("keydown", (event) => {
+                    if (event.key === "ArrowLeft") {
+                        event.preventDefault();
+                        showPhoto(index - 1);
+                    } else if (event.key === "ArrowRight") {
+                        event.preventDefault();
+                        showPhoto(index + 1);
+                    }
+                });
+
+                lightbox.addEventListener("click", (event) => {
+                    if (event.target === lightbox) closeLightbox();
+                });
+
+                lightbox.addEventListener("close", () => {
+                    document.body.classList.remove("lightbox-open");
+                    if (lastTrigger) lastTrigger.focus({ preventScroll: true });
+                });
+
+                let touchStartX = null;
+                lightbox.addEventListener("touchstart", (event) => {
+                    if (event.touches.length === 1) {
+                        touchStartX = event.touches[0].clientX;
+                    }
+                }, { passive: true });
+
+                lightbox.addEventListener("touchend", (event) => {
+                    if (touchStartX === null) return;
+                    const distance = event.changedTouches[0].clientX - touchStartX;
+                    touchStartX = null;
+                    if (Math.abs(distance) > 45) {
+                        showPhoto(index + (distance < 0 ? 1 : -1));
+                    }
+                }, { passive: true });
             }
 
             /* ---------- Год в подвале ---------- */

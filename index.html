@@ -28,7 +28,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
         /* ============================================================
@@ -40,7 +40,7 @@
             --paper: #fffdfa;
             --ink: #2c332e;
             --ink-soft: #5a615a;
-            --muted: #8a8f86;
+            --muted: #646a62;
             --sage: #4a5d4a;
             --sage-deep: #374636;
             --sage-dark: #2a352a;
@@ -714,7 +714,7 @@
             font-family: var(--serif);
             font-size: 52vw;
             font-style: italic;
-            font-weight: 300;
+            font-weight: 400;
             line-height: 1;
             opacity: .028;
             transform: translate(-50%, -54%);
@@ -752,7 +752,7 @@
             color: var(--sage);
             font-size: .58em;
             font-style: italic;
-            font-weight: 300;
+            font-weight: 400;
             vertical-align: .1em;
         }
 
@@ -863,7 +863,7 @@
             color: #fff;
             font-family: var(--serif);
             font-size: clamp(1.95rem, 4.4vw, 3rem);
-            font-weight: 300;
+            font-weight: 400;
             line-height: 1.1;
             text-align: center;
         }
@@ -891,7 +891,7 @@
             color: #fff;
             font-family: var(--serif);
             font-size: clamp(2.3rem, 6vw, 3.7rem);
-            font-weight: 300;
+            font-weight: 400;
             font-variant-numeric: tabular-nums;
             letter-spacing: .01em;
             line-height: 1;
@@ -927,7 +927,7 @@
             color: var(--ink);
             font-family: var(--serif);
             font-size: clamp(1.5rem, 3.1vw, 2.08rem);
-            font-weight: 300;
+            font-weight: 400;
             line-height: 1.55;
         }
         .invite__signature {
@@ -975,11 +975,11 @@
 
         .story__lead {
             margin-bottom: 26px;
-            color: var(--ink) !important;
+            color: var(--ink);
             font-family: var(--serif);
-            font-size: clamp(1.4rem, 2.8vw, 1.85rem) !important;
-            font-weight: 300;
-            line-height: 1.55 !important;
+            font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+            font-weight: 400;
+            line-height: 1.55;
         }
 
         .story__gallery {
@@ -1664,7 +1664,7 @@
             color: #fff;
             font-family: var(--serif);
             font-size: clamp(2.2rem, 5vw, 3.4rem);
-            font-weight: 300;
+            font-weight: 400;
             line-height: 1.08;
         }
         .footer__names {
@@ -1673,7 +1673,7 @@
             font-family: var(--serif);
             font-size: clamp(1.5rem, 3.2vw, 2.1rem);
             font-style: italic;
-            font-weight: 300;
+            font-weight: 400;
             line-height: 1.2;
         }
         .footer__names span {
@@ -1684,10 +1684,10 @@
         }
         .footer__date {
             margin-top: 10px;
-            color: rgba(250, 248, 243, .48);
+            color: rgba(250, 248, 243, .6);
             font-size: .6rem;
             font-weight: 500;
-            letter-spacing: .24em;
+            letter-spacing: .2em;
             text-transform: uppercase;
         }
         .footer__links {
@@ -1720,13 +1720,13 @@
 
         .footer__copy {
             margin-top: 28px;
-            color: rgba(250, 248, 243, .32);
+            color: rgba(250, 248, 243, .55);
             font-size: .64rem;
             letter-spacing: .08em;
         }
         .footer__music {
             margin-top: 10px;
-            color: rgba(250, 248, 243, .24);
+            color: rgba(250, 248, 243, .55);
             font-size: .56rem;
             letter-spacing: .06em;
             line-height: 1.5;
@@ -1767,6 +1767,113 @@
                 animation-iteration-count: 1 !important;
                 transition-duration: .01ms !important;
             }
+        }
+
+        /* ============================================================
+           Единая типографическая система
+           ============================================================ */
+        h1, h2, h3, .section-title, .intro__title { text-wrap: balance; }
+        p { text-wrap: pretty; }
+
+        /* Крупные заголовки и акценты — Cormorant Garamond 400 */
+        .hero__names,
+        .intro__title,
+        .section-title,
+        .countdown__title,
+        .countdown__value,
+        .venue__name,
+        .footer__title,
+        .footer__names,
+        .invite__text,
+        .story__lead,
+        .form-success h3 {
+            font-family: var(--serif);
+            font-weight: 400;
+        }
+
+        .hero__names {
+            font-size: clamp(2.6rem, 11vw, 7.4rem);
+            line-height: .98;
+            letter-spacing: -.018em;
+        }
+        .hero__amp { font-weight: 400; }
+        .intro__title {
+            font-size: clamp(2.8rem, 7.5vw, 4.4rem);
+            line-height: 1;
+            letter-spacing: -.015em;
+        }
+        .section-title {
+            font-size: clamp(2.2rem, 4.8vw, 3.4rem);
+            line-height: 1.06;
+            letter-spacing: -.015em;
+        }
+        .countdown__title { font-size: clamp(1.9rem, 4.2vw, 2.8rem); line-height: 1.1; }
+        .countdown__value { font-size: clamp(2.2rem, 5.6vw, 3.5rem); line-height: 1; }
+        .venue__name { font-size: clamp(2.5rem, 5vw, 3.4rem); line-height: 1; }
+        .footer__title { font-size: clamp(2.1rem, 4.6vw, 3.1rem); line-height: 1.1; }
+        .footer__names { font-size: clamp(1.4rem, 3vw, 1.9rem); line-height: 1.2; }
+        .invite__text { font-size: clamp(1.45rem, 2.9vw, 1.95rem); line-height: 1.55; }
+        .story__text .story__lead {
+            color: var(--ink);
+            font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+            line-height: 1.55;
+        }
+        .form-success h3 { font-size: clamp(2rem, 4vw, 2.4rem); line-height: 1.1; }
+
+        .tl-item__event h3,
+        .detail h3,
+        .venue-popup strong {
+            font-family: var(--serif);
+            font-weight: 500;
+        }
+        .tl-item__event h3 { font-size: 1.45rem; line-height: 1.25; }
+        .detail h3 { font-size: 1.3rem; line-height: 1.3; }
+
+        /* Основной текст */
+        body { font-size: 16px; line-height: 1.75; }
+        .hero__text,
+        .story__text p { font-size: 1rem; line-height: 1.8; }
+        .section__head > p:not(.eyebrow),
+        .rsvp__head p:last-child { font-size: .95rem; line-height: 1.75; }
+        .tl-item__event p { font-size: .9rem; line-height: 1.7; }
+        .venue__desc { font-size: .92rem; line-height: 1.7; }
+        .detail p { font-size: .9rem; line-height: 1.7; }
+        .venue__meta li { font-size: .86rem; }
+        .venue__address { font-size: 1rem; }
+        .form-note { font-size: .72rem; line-height: 1.65; }
+
+        /* Метки, кнопки, навигация */
+        .eyebrow { font-size: .64rem; font-weight: 500; letter-spacing: .3em; }
+        .hero__eyebrow { font-size: .64rem; letter-spacing: .3em; }
+        .nav a { font-size: .62rem; letter-spacing: .16em; }
+        .btn { font-size: .66rem; letter-spacing: .16em; }
+        .btn--small { font-size: .6rem; }
+        .field-label,
+        .field > label:not(.choice):not(.check-row) {
+            font-size: .64rem;
+            letter-spacing: .16em;
+        }
+        .input,
+        .textarea { font-size: 1rem; }
+        .choice,
+        .check-row { font-size: .92rem; }
+        .intro__open-label { font-size: .64rem; letter-spacing: .16em; }
+        .intro__hint { font-size: .66rem; }
+        .venue__map-link { font-size: .58rem; letter-spacing: .16em; }
+        .footer__links a,
+        .footer__links button { font-size: .6rem; letter-spacing: .16em; }
+        .countdown__label { font-size: .56rem; letter-spacing: .2em; }
+        .story__date,
+        .countdown__date,
+        .footer__date { font-size: .6rem; letter-spacing: .2em; }
+        .hero__place,
+        .intro__subtitle { font-size: .6rem; letter-spacing: .2em; }
+        .footer__copy { font-size: .62rem; }
+        .footer__music { font-size: .56rem; }
+        .brand__monogram { font-size: 1.4rem; font-weight: 500; letter-spacing: .04em; }
+
+        @media (max-height: 720px) {
+            .intro__title { font-size: clamp(2.4rem, 6vw, 3.4rem); }
         }
 
         /* ============================================================

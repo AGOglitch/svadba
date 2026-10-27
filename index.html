@@ -321,24 +321,12 @@
             box-shadow: 0 34px 60px -38px rgba(44, 51, 46, .65);
             transition: transform .4s var(--ease), box-shadow .4s var(--ease);
         }
-        .envelope__paper {
-            position: absolute;
-            top: -7px;
-            left: 7%;
-            right: 7%;
-            z-index: 1;
-            height: 60%;
-            border: 1px solid #e7dfcf;
-            border-radius: 2px;
-            background: #fffdfa;
-            transform: translateY(-5px);
-        }
         .envelope__flap {
             position: absolute;
             inset: 0;
             z-index: 2;
             border-radius: 3px 3px 0 0;
-            background: linear-gradient(180deg, #f9f2e4 0%, #eee1cc 100%);
+            background: linear-gradient(180deg, #f2e7d5 0%, #e5d7c1 100%);
             clip-path: polygon(0 0, 100% 0, 50% 61%);
         }
         .envelope__seal {
@@ -641,6 +629,7 @@
         .mobile-menu.is-open .mobile-menu__nav a:nth-child(2) { transition-delay: .1s; }
         .mobile-menu.is-open .mobile-menu__nav a:nth-child(3) { transition-delay: .14s; }
         .mobile-menu.is-open .mobile-menu__nav a:nth-child(4) { transition-delay: .18s; }
+        .mobile-menu.is-open .mobile-menu__nav a:nth-child(5) { transition-delay: .22s; }
 
         .mobile-menu__cta {
             width: 100%;
@@ -959,6 +948,112 @@
         }
 
         /* ============================================================
+           Наша история
+           ============================================================ */
+        .story { background: var(--cream); }
+
+        .story__date {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: .6rem;
+            font-weight: 500;
+            letter-spacing: .22em;
+            line-height: 1.6;
+            text-transform: uppercase;
+        }
+
+        .story__text {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .story__text p {
+            color: var(--ink-soft);
+            font-size: .98rem;
+            line-height: 1.85;
+        }
+        .story__text p + p { margin-top: 18px; }
+
+        .story__lead {
+            margin-bottom: 26px;
+            color: var(--ink) !important;
+            font-family: var(--serif);
+            font-size: clamp(1.4rem, 2.8vw, 1.85rem) !important;
+            font-weight: 300;
+            line-height: 1.55 !important;
+        }
+
+        .story__final {
+            margin-top: 26px;
+            color: var(--ink) !important;
+            font-family: var(--serif);
+            font-size: clamp(1.15rem, 2.2vw, 1.35rem) !important;
+            font-style: italic;
+            line-height: 1.6 !important;
+        }
+
+        .story__gallery {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            max-width: 1000px;
+            margin: clamp(40px, 6vw, 68px) auto 0;
+        }
+        .story__gallery figure {
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            background: var(--cream-2);
+            box-shadow: 0 26px 50px -44px rgba(44, 51, 46, .6);
+        }
+        .story__gallery figure::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 70%, rgba(44, 51, 46, .12));
+            pointer-events: none;
+        }
+        .story__gallery img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 32%;
+            transition: transform .9s var(--ease);
+        }
+        .story__gallery .g-landscape img { object-position: center 50%; }
+        .story__gallery figure:hover img { transform: scale(1.035); }
+
+        .story__gallery .g-portrait {
+            grid-column: span 2;
+            aspect-ratio: 4 / 5;
+        }
+        .story__gallery .g-landscape {
+            grid-column: span 3;
+            aspect-ratio: 16 / 10;
+        }
+
+        @media (max-width: 760px) {
+            .story__gallery { grid-template-columns: repeat(2, 1fr); }
+            .story__gallery .g-portrait { grid-column: span 1; }
+            .story__gallery .g-landscape { grid-column: span 2; }
+            .story__gallery .g-palms {
+                grid-column: span 2;
+                aspect-ratio: 4 / 5;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .story__gallery { grid-template-columns: 1fr; }
+            .story__gallery .g-portrait,
+            .story__gallery .g-landscape,
+            .story__gallery .g-palms {
+                grid-column: auto;
+                aspect-ratio: 4 / 5;
+            }
+            .story__gallery .g-landscape { aspect-ratio: 16 / 10; }
+        }
+
+        /* ============================================================
            Программа дня
            ============================================================ */
         .program {
@@ -1112,7 +1207,7 @@
             position: relative;
             min-height: 390px;
             overflow: hidden;
-            background: #e9e6dc url("map.png") right bottom / cover no-repeat;
+            background: #e9e6dc url("map.png") center center / cover no-repeat;
         }
 
         .venue__map-link {
@@ -1141,6 +1236,26 @@
         }
         .venue__map-link:hover { background: var(--sage); color: #fff; }
         .venue__map-link svg { width: 14px; height: 14px; }
+
+        .venue__map-credit {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            z-index: 1000;
+            padding: 4px 7px;
+            border-radius: 3px;
+            background: rgba(255, 253, 250, .86);
+            color: var(--muted);
+            font-size: .52rem;
+            font-weight: 500;
+            letter-spacing: .05em;
+            line-height: 1.3;
+            text-decoration: none;
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            transition: color .2s var(--ease), background-color .2s var(--ease);
+        }
+        .venue__map-credit:hover { background: var(--sage); color: #fff; }
 
         /* ============================================================
            Важно знать
@@ -1778,7 +1893,6 @@
 
             <button class="intro__envelope" id="open-invitation" type="button" aria-describedby="intro-hint">
                 <span class="envelope" aria-hidden="true">
-                    <span class="envelope__paper"></span>
                     <span class="envelope__flap"></span>
                     <span class="envelope__seal">А&nbsp;&amp;&nbsp;О</span>
                 </span>
@@ -1873,6 +1987,7 @@
 
             <nav class="nav" aria-label="Основная навигация">
                 <a href="#invitation">Приглашение</a>
+                <a href="#story">История</a>
                 <a href="#program">Программа</a>
                 <a href="#venue">Место</a>
                 <a href="#details">Детали</a>
@@ -1902,9 +2017,10 @@
     <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
         <nav class="mobile-menu__nav" aria-label="Мобильная навигация">
             <a href="#invitation"><span>01</span> Приглашение</a>
-            <a href="#program"><span>02</span> Программа дня</a>
-            <a href="#venue"><span>03</span> Место проведения</a>
-            <a href="#details"><span>04</span> Важно знать</a>
+            <a href="#story"><span>02</span> Наша история</a>
+            <a href="#program"><span>03</span> Программа дня</a>
+            <a href="#venue"><span>04</span> Место проведения</a>
+            <a href="#details"><span>05</span> Важно знать</a>
         </nav>
         <a class="btn btn--primary mobile-menu__cta" href="#rsvp">Подтвердить присутствие</a>
         <p class="mobile-menu__date">16 декабря 2026 · Челябинск</p>
@@ -2002,7 +2118,66 @@
             </div>
         </section>
 
-        <!-- 4. Программа дня -->
+        <!-- 4. Наша история -->
+        <section class="section story" id="story" aria-labelledby="story-title">
+            <div class="container">
+                <div class="section__head" data-reveal>
+                    <p class="eyebrow">Наша история</p>
+                    <h2 class="section-title" id="story-title">Шесть лет —<br>и всё по любви</h2>
+                    <p class="story__date">16 декабря 2020 — 16 декабря 2026</p>
+                </div>
+
+                <div class="story__text" data-reveal style="--reveal-delay:.08s">
+                    <p class="story__lead">
+                        Мы познакомились шесть лет назад через общих друзей — и с тех пор наша история
+                        идёт по маршруту «чуть-чуть не по плану, но зато весело».
+                    </p>
+                    <p>
+                        Однажды Антон позвал меня к сестре и заботливо вызвал такси. Всё было очень
+                        романтично… ровно до момента, когда оплата переключилась на наличные, потому что
+                        на карте не хватило денег. Тогда мне это показалось забавным, а сейчас я думаю:
+                        ну вот, уже тогда было понятно — с ним точно не будет скучно.
+                    </p>
+                    <p>
+                        Мы очень разные: Антон бодро встаёт в 7–8 утра, будто у него встроенный будильник,
+                        а я искренне считаю, что утро начинается после обеда. И всё равно как-то совпадаем.
+                    </p>
+                    <p>
+                        А ещё у нас есть Добби — лысая кошка, которую мы любим как собственного ребёнка.
+                        Она, кстати, тоже считает себя главным членом семьи.
+                    </p>
+                    <p>
+                        Наша история началась 16 декабря 2020 года, и теперь мы отмечаем эту дату
+                        по-крупному: наша свадьба состоится 16 декабря 2026 года.
+                    </p>
+                    <p class="story__final">
+                        Шесть лет учились не теряться — и вот наконец нашли самый верный маршрут:
+                        друг к другу. Ну, и по дороге из Екатеринбурга в Челябинск всё-таки один раз
+                        заблудились — но это уже совсем другая история…
+                    </p>
+                </div>
+
+                <div class="story__gallery">
+                    <figure class="g-portrait g-balcony" data-reveal>
+                        <img src="photos/photo-balcony.jpg" alt="Антон и Ольга на балконе" width="1200" height="1600" loading="lazy" decoding="async">
+                    </figure>
+                    <figure class="g-portrait g-mirror" data-reveal style="--reveal-delay:.06s">
+                        <img src="photos/photo-mirror.jpg" alt="Селфи Антона и Ольги" width="960" height="1280" loading="lazy" decoding="async">
+                    </figure>
+                    <figure class="g-portrait g-palms" data-reveal style="--reveal-delay:.12s">
+                        <img src="photos/photo-palms.jpg" alt="Антон и Ольга в пальмовом саду" width="1199" height="1600" loading="lazy" decoding="async">
+                    </figure>
+                    <figure class="g-landscape g-sunset" data-reveal>
+                        <img src="photos/photo-sunset.jpg" alt="Антон и Ольга на закате" width="1600" height="905" loading="lazy" decoding="async">
+                    </figure>
+                    <figure class="g-landscape g-night" data-reveal style="--reveal-delay:.06s">
+                        <img src="photos/photo-night.jpg" alt="Антон и Ольга на вечерней прогулке" width="1280" height="959" loading="lazy" decoding="async">
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Программа дня -->
         <section class="section program" id="program" aria-labelledby="program-title">
             <div class="container">
                 <div class="section__head" data-reveal>
@@ -2069,7 +2244,7 @@
             </div>
         </section>
 
-        <!-- 5. Место проведения -->
+        <!-- 6. Место проведения -->
         <section class="section venue" id="venue" aria-labelledby="venue-title">
             <div class="container">
                 <div class="section__head" data-reveal>
@@ -2129,12 +2304,13 @@
                                 <path d="M7 17 17 7M9 7h8v8"/>
                             </svg>
                         </a>
+                        <a class="venue__map-credit" href="https://yandex.ru/maps/56/chelyabinsk/?ll=61.415409%2C55.152780&amp;mode=poi&amp;poi%5Bpoint%5D=61.415227%2C55.152726&amp;poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D8111288751&amp;z=19.8" target="_blank" rel="noopener noreferrer">© Яндекс Карты</a>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 6. Важно знать -->
+        <!-- 7. Важно знать -->
         <section class="section details" id="details" aria-labelledby="details-title">
             <div class="container">
                 <div class="section__head" data-reveal>
@@ -2202,7 +2378,7 @@
             </div>
         </section>
 
-        <!-- 7. Анкета гостя -->
+        <!-- 8. Анкета гостя -->
         <section class="section rsvp" id="rsvp" aria-labelledby="rsvp-title">
             <div class="container">
                 <div class="rsvp__head" data-reveal>
@@ -2264,7 +2440,7 @@
 
                     <div class="attending-only" id="attending-fields">
                         <fieldset class="field">
-                            <legend class="field-label">Трансфер и размещение</legend>
+                            <legend class="field-label">Трансфер</legend>
                             <div class="check-list">
                                 <label class="check-row">
                                     <input type="checkbox" name="transfer_to" value="yes" data-fs-field>
@@ -2273,10 +2449,6 @@
                                 <label class="check-row">
                                     <input type="checkbox" name="transfer_from" value="yes" data-fs-field>
                                     <span>Нужен трансфер после банкета</span>
-                                </label>
-                                <label class="check-row">
-                                    <input type="checkbox" name="accommodation" value="yes" data-fs-field>
-                                    <span>Нужна помощь с размещением</span>
                                 </label>
                             </div>
                         </fieldset>
@@ -2328,6 +2500,7 @@
             <p class="footer__date">16 декабря 2026 · Челябинск</p>
 
             <div class="footer__links">
+                <a href="#story">История</a>
                 <a href="#program">Программа</a>
                 <a href="#venue">Место</a>
                 <a href="#rsvp">Анкета гостя</a>

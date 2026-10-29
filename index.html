@@ -931,12 +931,30 @@
             line-height: 1.55;
         }
         .invite__signature {
-            margin-top: 34px;
+            display: block;
+            width: fit-content;
+            margin: 34px auto 0;
+            padding: 0;
+            border: 0;
+            background: none;
             color: var(--sage);
             font-family: var(--serif);
             font-size: 1.18rem;
             font-style: italic;
             line-height: 1.4;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transition: color .2s var(--ease);
+        }
+        .invite__signature:hover { color: var(--sage-deep); }
+        .invite__signature.is-dobby { color: var(--sage-deep); }
+        .invite__signature:focus-visible {
+            outline: 2px solid var(--sage);
+            outline-offset: 6px;
+            border-radius: 2px;
         }
         .invite__signature::before {
             content: "";
@@ -1193,6 +1211,113 @@
             .lightbox__nav { width: 40px; height: 40px; }
             .lightbox__nav--prev { left: 8px; }
             .lightbox__nav--next { right: 8px; }
+        }
+
+        /* Добби */
+        .dobby-cat {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 70;
+            width: 76px;
+            height: 64px;
+            padding: 0;
+            border: 0;
+            background: none;
+            cursor: pointer;
+            overflow: visible;
+            will-change: transform;
+            touch-action: manipulation;
+            transform: translate3d(-120px, 40vh, 0);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .dobby-cat[hidden] { display: none !important; }
+        .dobby-cat__flip,
+        .dobby-cat__jump,
+        .dobby-cat__art {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .dobby-cat__flip { transform-origin: 50% 50%; }
+        .dobby-cat__jump { transform-origin: 50% 100%; }
+        .dobby-cat__art { transform-origin: 50% 100%; }
+        .dobby-cat__art svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            filter: drop-shadow(0 9px 7px rgba(44, 51, 46, .22));
+        }
+        .dobby-cat__bubble {
+            position: absolute;
+            left: 50%;
+            bottom: calc(100% + 4px);
+            z-index: 2;
+            padding: 6px 10px;
+            border: 1px solid var(--line-soft);
+            border-radius: 999px;
+            background: var(--paper);
+            box-shadow: 0 10px 24px -16px rgba(44, 51, 46, .7);
+            color: var(--sage-deep);
+            font-family: var(--sans);
+            font-size: .62rem;
+            font-weight: 500;
+            letter-spacing: .06em;
+            line-height: 1.2;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 4px);
+            transition: opacity .2s var(--ease), transform .2s var(--ease);
+        }
+        .dobby-cat.is-talking .dobby-cat__bubble {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+        .dobby-cat.is-running .dobby-cat__art {
+            animation: dobby-bob .38s ease-in-out infinite alternate;
+        }
+        .dobby-cat.is-running .dobby-tail {
+            animation: dobby-tail .42s ease-in-out infinite alternate;
+            transform-box: fill-box;
+            transform-origin: 100% 20%;
+        }
+        .dobby-cat.is-resting .dobby-tail {
+            animation: dobby-tail-rest 2.6s ease-in-out infinite alternate;
+            transform-box: fill-box;
+            transform-origin: 100% 20%;
+        }
+        .dobby-cat.is-petted .dobby-cat__jump {
+            animation: dobby-jump .45s var(--ease);
+        }
+
+        @keyframes dobby-bob {
+            from { transform: translateY(0) rotate(-1deg); }
+            to { transform: translateY(-4px) rotate(1deg); }
+        }
+        @keyframes dobby-tail {
+            from { transform: rotate(-8deg); }
+            to { transform: rotate(10deg); }
+        }
+        @keyframes dobby-tail-rest {
+            from { transform: rotate(-4deg); }
+            to { transform: rotate(5deg); }
+        }
+        @keyframes dobby-jump {
+            0%, 100% { transform: translateY(0) scale(1); }
+            45% { transform: translateY(-16px) scale(1.04); }
+        }
+
+        @media (max-width: 600px) {
+            .dobby-cat { width: 64px; height: 54px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .dobby-cat,
+            .dobby-cat__art,
+            .dobby-cat__jump,
+            .dobby-tail { animation: none !important; }
         }
 
         /* ============================================================
@@ -2363,7 +2488,7 @@
                     Искренне и от всей души будем рады видеть вас среди гостей на нашей свадьбе!
                 </p>
 
-                <p class="invite__signature" data-reveal style="--reveal-delay:.16s">С любовью, Антон и Ольга</p>
+                <button class="invite__signature" id="signature-egg" type="button" data-reveal style="--reveal-delay:.16s">С любовью, Антон и Ольга</button>
             </div>
         </section>
 
@@ -2782,6 +2907,40 @@
         </div>
     </dialog>
 
+    <button class="dobby-cat" id="dobby-cat" type="button" aria-label="Погладить Добби" hidden>
+        <span class="dobby-cat__bubble" id="dobby-bubble" aria-hidden="true">Мяу!</span>
+        <span class="dobby-cat__flip" aria-hidden="true">
+            <span class="dobby-cat__jump">
+                <span class="dobby-cat__art">
+                    <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+                        <g stroke="#4a5d4a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path class="dobby-tail" d="M31 63C18 66 8 57 12 47C15 40 23 40 25 47" fill="none"/>
+                            <path d="M44 80C42 87 40 92 36 96"/>
+                            <path d="M58 81C58 88 60 92 61 96"/>
+                            <path d="M78 80C80 87 83 92 87 96"/>
+                            <path d="M71 81C71 88 73 92 75 96"/>
+                            <path d="M29 59C29 45 41 37 59 37C77 37 87 46 88 60C89 73 80 81 63 81H45C35 81 29 73 29 59Z" fill="#e9d6c7"/>
+                            <path d="M77 43C77 33 84 25 96 25C106 25 112 33 111 43C110 51 103 56 94 56C85 56 77 52 77 43Z" fill="#e9d6c7"/>
+                            <path d="M84 33C80 21 82 11 88 7C94 13 96 22 94 32" fill="#e9d6c7"/>
+                            <path d="M102 32C104 20 110 12 116 10C118 18 116 28 110 35" fill="#e9d6c7"/>
+                            <path d="M87 28C85 20 86 14 89 11C92 16 93 22 92 27" fill="#d8b6a5" stroke="none"/>
+                            <path d="M106 28C108 20 111 15 114 13C115 19 113 25 110 30" fill="#d8b6a5" stroke="none"/>
+                            <ellipse cx="97" cy="39" rx="2.2" ry="1.8" fill="#2c332e" stroke="none"/>
+                            <circle cx="97.7" cy="38.4" r=".5" fill="#fffdfa" stroke="none"/>
+                            <path d="M108 45h4l-2 2.5-2-2.5Z" fill="#c98e7a" stroke="none"/>
+                            <path d="M109 48c1.4 1.4 3.2 1.4 4.6 0"/>
+                            <path d="M84 30c3-1 5-1 8 0M82 34c4-1 7-1 10 0M86 24c2-1 4-1 6 0" stroke="#d2b3a2" stroke-width="1.1"/>
+                            <path d="M43 49c4-2 8-3 12-3M41 58c4-2 8-3 12-3M42 67c4-2 8-2 11-2" stroke="#d2b3a2" stroke-width="1.1"/>
+                            <path d="M78 54c4 2 8 2 12 0" stroke-width="3"/>
+                            <circle cx="84" cy="57.5" r="2" fill="#c8a96b" stroke="none"/>
+                            <path d="M34 96h-4M59 96h-4M85 96h4M73 96h4"/>
+                        </g>
+                    </svg>
+                </span>
+            </span>
+        </span>
+    </button>
+
     <script>
         (() => {
             "use strict";
@@ -3164,6 +3323,183 @@
                         showPhoto(index + (distance < 0 ? 1 : -1));
                     }
                 }, { passive: true });
+            }
+
+            /* ---------- Пасхалка: Добби ---------- */
+            const signatureEgg = $("#signature-egg");
+            const dobbyCat = $("#dobby-cat");
+            const dobbyBubble = $("#dobby-bubble");
+            const dobbyFlip = $(".dobby-cat__flip", dobbyCat);
+
+            if (signatureEgg && dobbyCat && dobbyBubble && dobbyFlip) {
+                const catState = {
+                    x: -110,
+                    y: window.innerHeight - 120,
+                    targetX: 0,
+                    targetY: 0,
+                    direction: 1,
+                    running: false,
+                    resting: false,
+                    activeUntil: 0,
+                    pausedUntil: 0,
+                    lastTime: 0,
+                    raf: null,
+                    bubbleTimer: null,
+                    clicks: 0
+                };
+
+                const placeCat = () => {
+                    dobbyCat.style.transform = `translate3d(${Math.round(catState.x)}px, ${Math.round(catState.y)}px, 0)`;
+                    dobbyFlip.style.transform = `scaleX(${catState.direction})`;
+                };
+
+                const pickTarget = () => {
+                    const pad = 14;
+                    const minY = Math.max(110, window.innerHeight * 0.42);
+                    const maxY = Math.max(minY + 20, window.innerHeight - 92);
+                    const maxX = Math.max(pad + 20, window.innerWidth - 96);
+                    catState.targetX = pad + Math.random() * (maxX - pad);
+                    catState.targetY = minY + Math.random() * (maxY - minY);
+                };
+
+                const showBubble = (text, duration = 1500) => {
+                    dobbyBubble.textContent = text;
+                    dobbyCat.classList.add("is-talking");
+                    window.clearTimeout(catState.bubbleTimer);
+                    catState.bubbleTimer = window.setTimeout(() => {
+                        dobbyCat.classList.remove("is-talking");
+                    }, duration);
+                };
+
+                const stopCatLoop = () => {
+                    if (catState.raf) {
+                        window.cancelAnimationFrame(catState.raf);
+                        catState.raf = null;
+                    }
+                };
+
+                const tickCat = (time) => {
+                    if (!catState.running) return;
+                    if (!catState.lastTime) catState.lastTime = time;
+                    const delta = Math.min((time - catState.lastTime) / 1000, 0.05);
+                    catState.lastTime = time;
+
+                    if (!catState.resting && time >= catState.activeUntil) {
+                        catState.resting = true;
+                        catState.targetX = window.innerWidth - 100;
+                        catState.targetY = window.innerHeight - 100;
+                    }
+
+                    if (time >= catState.pausedUntil) {
+                        const dx = catState.targetX - catState.x;
+                        const dy = catState.targetY - catState.y;
+                        const distance = Math.hypot(dx, dy);
+
+                        if (distance < 8) {
+                            if (catState.resting) {
+                                catState.x = catState.targetX;
+                                catState.y = catState.targetY;
+                                placeCat();
+                                catState.running = false;
+                                catState.resting = false;
+                                dobbyCat.classList.remove("is-running");
+                                dobbyCat.classList.add("is-resting");
+                                showBubble("Мурр…", 2000);
+                                stopCatLoop();
+                                return;
+                            }
+                            catState.pausedUntil = time + 350 + Math.random() * 900;
+                            pickTarget();
+                        } else {
+                            catState.direction = dx < 0 ? -1 : 1;
+                            const step = Math.min(150 * delta, distance);
+                            catState.x += (dx / distance) * step;
+                            catState.y += (dy / distance) * step;
+                            catState.x = Math.max(8, Math.min(window.innerWidth - 90, catState.x));
+                            catState.y = Math.max(110, Math.min(window.innerHeight - 90, catState.y));
+                            dobbyCat.classList.add("is-running");
+                            dobbyCat.classList.remove("is-resting");
+                            placeCat();
+                        }
+                    }
+
+                    catState.raf = window.requestAnimationFrame(tickCat);
+                };
+
+                const wakeCat = () => {
+                    if (prefersReducedMotion) {
+                        catState.x = window.innerWidth - 96;
+                        catState.y = window.innerHeight - 96;
+                        placeCat();
+                        dobbyCat.classList.add("is-resting");
+                        showBubble("Мурр…", 2000);
+                        return;
+                    }
+                    catState.resting = false;
+                    catState.running = true;
+                    catState.activeUntil = performance.now() + 30000;
+                    catState.lastTime = 0;
+                    dobbyCat.classList.remove("is-resting");
+                    dobbyCat.classList.add("is-running");
+                    pickTarget();
+                    showBubble("Мяу!", 1200);
+                    if (!catState.raf) catState.raf = window.requestAnimationFrame(tickCat);
+                };
+
+                const activateDobby = () => {
+                    if (dobbyCat.hidden) {
+                        dobbyCat.hidden = false;
+                        catState.x = -96;
+                        catState.y = window.innerHeight - 130;
+                        placeCat();
+                    }
+                    if (prefersReducedMotion) {
+                        catState.x = window.innerWidth - 96;
+                        catState.y = window.innerHeight - 96;
+                        placeCat();
+                        dobbyCat.classList.add("is-resting");
+                        showBubble("Добби здесь!", 2200);
+                        return;
+                    }
+                    wakeCat();
+                    showBubble("Добби здесь!", 2200);
+                };
+
+                signatureEgg.addEventListener("click", () => {
+                    if (signatureEgg.classList.contains("is-dobby")) {
+                        activateDobby();
+                        return;
+                    }
+
+                    catState.clicks += 1;
+
+                    if (catState.clicks >= 3) {
+                        catState.clicks = 0;
+                        signatureEgg.textContent = "С любовью, Антон и Ольга. А также Добби!";
+                        signatureEgg.classList.add("is-dobby");
+                        activateDobby();
+                    }
+                });
+
+                dobbyCat.addEventListener("click", () => {
+                    dobbyCat.classList.add("is-petted");
+                    window.setTimeout(() => dobbyCat.classList.remove("is-petted"), 500);
+
+                    if (!catState.running || catState.resting) {
+                        wakeCat();
+                    } else {
+                        catState.activeUntil = performance.now() + 30000;
+                        showBubble("Мяу!", 1200);
+                    }
+                });
+
+                window.addEventListener("resize", () => {
+                    if (dobbyCat.hidden) return;
+                    catState.x = Math.min(catState.x, window.innerWidth - 90);
+                    catState.y = Math.min(catState.y, window.innerHeight - 90);
+                    if (catState.running) pickTarget();
+                    placeCat();
+                });
             }
 
             /* ---------- Год в подвале ---------- */

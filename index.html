@@ -1825,6 +1825,33 @@
             text-align: center;
         }
 
+        .rsvp__ps {
+            max-width: 620px;
+            margin: 28px auto 0;
+            color: var(--muted);
+            font-size: .82rem;
+            line-height: 1.7;
+            text-align: center;
+        }
+        .rsvp__ps-mark {
+            color: var(--sage);
+            font-family: var(--serif);
+            font-size: 1.08rem;
+            font-style: italic;
+        }
+        .rsvp__ps-tag {
+            display: inline-block;
+            padding: 1px 6px 2px;
+            border: 1px solid rgba(74, 93, 74, .28);
+            border-radius: 3px;
+            color: var(--sage-deep);
+            font-size: .86em;
+            font-weight: 500;
+            letter-spacing: .06em;
+            line-height: 1.3;
+            vertical-align: .06em;
+        }
+
         .form-success {
             max-width: 740px;
             margin: 0 auto;
@@ -2850,6 +2877,12 @@
                     <h3>Спасибо!</h3>
                     <p>Ваш ответ успешно отправлен. Мы с нетерпением ждём встречи с вами!</p>
                 </div>
+
+                <p class="rsvp__ps" data-reveal style="--reveal-delay:.08s">
+                    <span class="rsvp__ps-mark">P.s:</span>
+                    на сайте есть пасхалка, если найдешь ее первым и отправишь скриншот
+                    в <span class="rsvp__ps-tag">TG</span>, получишь отдельный приз
+                </p>
             </div>
         </section>
     </main>

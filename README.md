@@ -85,10 +85,16 @@
 
 ## Анкета, Telegram-бот и Formspree
 
-Сайт остаётся статическим, но анкета теперь отправляется не напрямую в Formspree, а в Cloudflare Worker:
+Сайт остаётся статическим, но анкета отправляется не напрямую в Formspree, а через свой адрес:
 
 ```js
-const RSVP_ENDPOINT = "https://antoniolga-bot.agoglitch.workers.dev/api/rsvp";
+const RSVP_ENDPOINT = "https://api.antoniolga.ru/api/rsvp";
+```
+
+`api.antoniolga.ru` — маленький релей на Vercel (папка [`relay/`](relay/README.md)). Он нужен потому, что в некоторых сетях `*.workers.dev` не открывается: гость обращается к своему домену, а релей передаёт запрос в Cloudflare Worker.
+
+```
+Браузер → api.antoniolga.ru (Vercel) → Worker (Cloudflare) → D1 + Telegram + Formspree
 ```
 
 Что происходит при отправке:
@@ -100,7 +106,7 @@ const RSVP_ENDPOINT = "https://antoniolga-bot.agoglitch.workers.dev/api/rsvp";
 5. Возвращает сайту успешный ответ — форма показывает «Спасибо!» или «Ваш ответ обновлён».
 6. При выключенном JavaScript срабатывает обычная отправка через `action` формы в Formspree.
 
-Если Worker недоступен с устройства гостя (например, сеть блокирует `workers.dev`), форма после 15 секунд ожидания автоматически отправляет анкету напрямую в Formspree и всё равно показывает «Спасибо!». Ответ не теряется: он придёт на почту, хотя в D1 и Telegram может не попасть.
+Если релей или Worker недоступны, форма после 15 секунд ожидания отправляет анкету напрямую в Formspree и всё равно показывает «Спасибо!». Ответ не теряется: он придёт на почту, хотя в D1 и Telegram может не попасть.
 
 ### Telegram-бот
 
@@ -115,12 +121,13 @@ const RSVP_ENDPOINT = "https://antoniolga-bot.agoglitch.workers.dev/api/rsvp";
 - `/broadcast` — рассылка всем, кто нажал Start;
 - каждый день присылает CSV-бэкап, каждые 30 минут проверяет доступность сайта.
 
-Подробная инструкция по Worker, D1 и деплою — в [`bot/README.md`](bot/README.md).
+Подробная инструкция по Worker, D1 и деплою — в [`bot/README.md`](bot/README.md), по релею — в [`relay/README.md`](relay/README.md).
 
 ### Если нужно заменить форму или бота
 
 - ID Formspree указан в `bot/wrangler.toml` (`FORMSPREE_FORM_ID`) и в `action` формы. При замене обновите оба места.
-- Адрес Worker меняется в `index.html` (`RSVP_ENDPOINT`) и в `wrangler.toml` после деплоя.
+- Адрес приёма анкет меняется в `index.html` (`RSVP_ENDPOINT`). Сейчас это `https://api.antoniolga.ru/api/rsvp` — релей на Vercel, который передаёт запрос в Worker.
+- Если меняется адрес Worker, обновите `WORKER_URL` в настройках проекта Vercel (по умолчанию он уже прописан в `relay/api/rsvp.js`).
 - Секреты бота (`BOT_TOKEN`, `ADMIN_IDS`, `WEBHOOK_SECRET`, `SETUP_SECRET`) хранятся только в Cloudflare.
 
 ## Что заменить перед публикацией

@@ -45,19 +45,21 @@ https://relay-xxxx.vercel.app/api/health
 
 ## 3. Свой адрес api.antoniolga.ru
 
-В панели Vercel: **Project → Settings → Domains → Add** → `api.antoniolga.ru`.
-
-Vercel покажет запись для DNS. В reg.ru (управление DNS домена `antoniolga.ru`) добавьте:
+Домен `api.antoniolga.ru` уже добавлен в проект Vercel `antoniolga-rsvp`.
+В reg.ru (управление DNS домена `antoniolga.ru`) добавлена запись:
 
 | Тип | Имя | Значение |
 |---|---|---|
-| CNAME | `api` | `cname.vercel-dns.com` |
+| CNAME | `api` | `39daa10fa257dea7.vercel-dns-017.com` |
 
-Проверка после обновления DNS (обычно 5–30 минут):
+Проверка:
 
 ```text
 https://api.antoniolga.ru/api/health
 ```
+
+Если запись нужно пересоздать, актуальное значение Vercel показывает в
+**Project → Settings → Domains → api.antoniolga.ru**.
 
 ## 4. Подключение на сайте
 

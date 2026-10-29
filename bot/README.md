@@ -2,6 +2,14 @@
 
 Backend для Telegram-бота на **Cloudflare Workers + D1**. Сайт остаётся статическим на GitHub Pages, а Worker принимает анкеты, хранит гостей и обрабатывает конкурс скриншотов.
 
+## Уже развёрнуто
+
+- Бот: [@antoniolga_bot](https://t.me/antoniolga_bot)
+- Worker: `https://antoniolga-bot.agoglitch.workers.dev`
+- База D1: `antoniolga-bot` (`8ed66c16-4a26-4537-8d3f-fdc7345d65e2`)
+- Код конкурса: `DOBBY-1612`
+- Webhook: `https://antoniolga-bot.agoglitch.workers.dev/telegram`
+
 ## Что умеет
 
 - Принимает анкеты гостей с сайта и сохраняет их в D1.
@@ -50,11 +58,13 @@ wrangler d1 execute antoniolga-bot --file=schema.sql --remote
 wrangler secret put BOT_TOKEN
 wrangler secret put ADMIN_IDS
 wrangler secret put WEBHOOK_SECRET
+wrangler secret put SETUP_SECRET
 ```
 
 - `BOT_TOKEN` — токен из BotFather.
 - `ADMIN_IDS` — Telegram ID администраторов через запятую, например `123456789,987654321`.
 - `WEBHOOK_SECRET` — случайная строка, например 32+ символа. Она же нужна при установке webhook.
+- `SETUP_SECRET` — отдельный случайный секрет для защищённого `/setup`-маршрута.
 
 Задеплойте:
 
@@ -78,10 +88,29 @@ https://antoniolga-bot.<ваш-поддомен>.workers.dev/health
 
 ## 3. Установить webhook
 
+Проще всего через защищённый `/setup`-маршрут Worker (он сам вызывает Telegram API):
+
+```powershell
+$setup = (Get-Content C:\Temp\opencode\telegram-setup-secret.txt -Raw).Trim()
+$headers = @{
+  Authorization = "Bearer $setup"
+  "Content-Type" = "application/json"
+}
+
+Invoke-RestMethod "https://antoniolga-bot.agoglitch.workers.dev/setup" `
+  -Method Post `
+  -Headers $headers `
+  -Body "{}"
+```
+
+В ответе будет `ok: true`, имя бота и установленный webhook.
+
+Альтернатива — напрямую через Telegram API:
+
 ```powershell
 $token = (Get-Content C:\Temp\opencode\telegram-bot-token.txt -Raw).Trim()
 $secret = "ВАШ_WEBHOOK_SECRET"
-$worker = "https://antoniolga-bot.<ваш-поддомен>.workers.dev"
+$worker = "https://antoniolga-bot.agoglitch.workers.dev"
 
 Invoke-RestMethod "https://api.telegram.org/bot$token/setWebhook" `
   -Method Post `
@@ -90,12 +119,6 @@ Invoke-RestMethod "https://api.telegram.org/bot$token/setWebhook" `
     secret_token = $secret
     allowed_updates = '["message","edited_message"]'
   }
-```
-
-Проверка:
-
-```powershell
-Invoke-RestMethod "https://api.telegram.org/bot$token/getWebhookInfo"
 ```
 
 ## 4. Проверить конкурс
@@ -108,27 +131,19 @@ Invoke-RestMethod "https://api.telegram.org/bot$token/getWebhookInfo"
 
 Если нужен другой код, поменяйте `CONTEST_CODE` в `wrangler.toml` и продублируйте его на сайте.
 
-## 5. Подключить анкету с сайта
+## 5. Анкета с сайта
 
-Пока сайт отправляет анкеты в Formspree. Чтобы бот видел гостей:
+Сайт уже отправляет анкеты в Worker:
 
-1. В `index.html` добавить адрес Worker:
-   ```js
-   const RSVP_ENDPOINT = "https://antoniolga-bot.<ваш-поддомен>.workers.dev/api/rsvp";
-   ```
-2. Отправлять форму на этот endpoint JSON-ом:
-   ```json
-   {
-     "name": "Иван Иванов",
-     "attendance": "yes",
-     "transfer_to": true,
-     "transfer_from": false,
-     "wishes": "Без орехов"
-   }
-   ```
-3. Worker сохранит гостя в D1, пришлёт уведомление в Telegram и (если задан `FORMSPREE_FORM_ID`) продублирует заявку в Formspree.
+```js
+const RSVP_ENDPOINT = "https://antoniolga-bot.agoglitch.workers.dev/api/rsvp";
+```
 
-CORS уже разрешает `https://antoniolga.ru` и `http://localhost`.
+Worker сохраняет гостя в D1, присылает уведомление в Telegram и дублирует заявку в Formspree (`FORMSPREE_FORM_ID = "xbgggkln"`).
+
+CORS разрешает `https://antoniolga.ru` и `http://localhost`.
+
+Проверка: заполните анкету на сайте → в D1 появится запись → администратор получит сообщение в Telegram.
 
 ## 6. Полезные команды
 

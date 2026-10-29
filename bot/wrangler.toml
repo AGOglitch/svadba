@@ -9,7 +9,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "antoniolga-bot"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "8ed66c16-4a26-4537-8d3f-fdc7345d65e2"
 
 [vars]
 SITE_ORIGIN = "https://antoniolga.ru"

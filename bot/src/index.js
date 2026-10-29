@@ -21,6 +21,10 @@ export default {
       return handleRsvp(request, env);
     }
 
+    if (url.pathname === "/setup" && request.method === "POST") {
+      return handleSetup(request, env);
+    }
+
     if (url.pathname === "/telegram" && request.method === "POST") {
       return handleTelegram(request, env);
     }
@@ -163,6 +167,38 @@ async function sendCsv(env, chatId, csv, filename, caption) {
   });
 
   return response.json().catch(() => ({ ok: false }));
+}
+
+/* ---------- setup ---------- */
+
+async function handleSetup(request, env) {
+  const authorization = request.headers.get("Authorization") || "";
+
+  if (!env.SETUP_SECRET || authorization !== `Bearer ${env.SETUP_SECRET}`) {
+    return json({ ok: false, error: "Forbidden" }, 403);
+  }
+
+  const origin = new URL(request.url).origin;
+  const webhook = await telegram(env, "setWebhook", {
+    url: `${origin}/telegram`,
+    secret_token: env.WEBHOOK_SECRET,
+    allowed_updates: ["message", "edited_message"]
+  });
+  const me = await telegram(env, "getMe", {});
+  const webhookInfo = await telegram(env, "getWebhookInfo", {});
+
+  return json({
+    ok: Boolean(webhook.ok),
+    webhook,
+    me: me.result || null,
+    meError: me.ok ? null : me.description,
+    tokenCheck: {
+      length: String(env.BOT_TOKEN || "").length,
+      format: /^\d+:[A-Za-z0-9_-]+$/.test(env.BOT_TOKEN || ""),
+      whitespace: /\s/.test(env.BOT_TOKEN || "")
+    },
+    webhookInfo: webhookInfo.result || null
+  });
 }
 
 /* ---------- RSVP ---------- */

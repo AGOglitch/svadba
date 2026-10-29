@@ -4,6 +4,6 @@
   "private": true,
   "description": "Тонкий релей: браузер → Vercel → Cloudflare Worker (D1 + Telegram)",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   }
 }

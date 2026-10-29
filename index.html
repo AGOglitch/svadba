@@ -3626,6 +3626,7 @@
 
             const submitButton = $("#submit-btn");
             const RSVP_ENDPOINT = "https://antoniolga-bot.agoglitch.workers.dev/api/rsvp";
+            const FORMSPREE_ENDPOINT = form.getAttribute("action") || "https://formspree.io/f/xbgggkln";
 
             const clearFormErrors = () => {
                 if (formError) {
@@ -3666,6 +3667,59 @@
                 });
             };
 
+            // Основной путь — Worker, резервный — Formspree.
+            // Таймаут нужен, чтобы форма не «зависала» навсегда при проблемах с сетью.
+            const sendWithTimeout = async (url, options, timeout = 15000) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeout);
+
+                try {
+                    return await fetch(url, { ...options, signal: controller.signal });
+                } finally {
+                    clearTimeout(timer);
+                }
+            };
+
+            const sendToWorker = async (payload) => {
+                const response = await sendWithTimeout(RSVP_ENDPOINT, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json().catch(() => ({}));
+
+                if (response.ok && result.ok !== false) {
+                    return { saved: true, updated: Boolean(result.updated) };
+                }
+
+                // 5xx — сбой на стороне Worker: пробуем резервный путь.
+                if (response.status >= 500) {
+                    throw new Error("Worker error");
+                }
+
+                return { saved: false, error: result.error || "Не удалось отправить ответ." };
+            };
+
+            const sendToFormspree = async (payload) => {
+                const body = new FormData();
+                body.append("name", payload.name);
+                if (payload.phone) body.append("phone", payload.phone);
+                body.append("attendance", payload.attendance);
+                if (payload.transfer_to) body.append("transfer_to", "yes");
+                if (payload.transfer_from) body.append("transfer_from", "yes");
+                if (payload.wishes) body.append("wishes", payload.wishes);
+                body.append("_subject", "Свадьба Антона и Ольги — ответ гостя");
+
+                const response = await sendWithTimeout(FORMSPREE_ENDPOINT, {
+                    method: "POST",
+                    headers: { Accept: "application/json" },
+                    body
+                });
+
+                if (!response.ok) throw new Error("Formspree error");
+                return { saved: true, updated: false };
+            };
+
             form.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 clearFormErrors();
@@ -3690,20 +3744,30 @@
                 form.setAttribute("aria-busy", "true");
 
                 try {
-                    const response = await fetch(RSVP_ENDPOINT, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
-                    const result = await response.json().catch(() => ({}));
+                    let outcome = null;
 
-                    if (response.ok && result.ok !== false) {
-                        showFormSuccess(Boolean(result.updated));
-                    } else {
-                        showFormError(result.error || "Не удалось отправить ответ. Попробуйте ещё раз.");
+                    try {
+                        outcome = await sendToWorker(payload);
+                    } catch (error) {
+                        // Worker недоступен с этого устройства — ниже резервная отправка.
+                        outcome = null;
                     }
-                } catch (error) {
-                    showFormError("Похоже, нет соединения. Проверьте интернет и попробуйте снова.");
+
+                    if (!outcome) {
+                        try {
+                            outcome = await sendToFormspree(payload);
+                        } catch (error) {
+                            outcome = null;
+                        }
+                    }
+
+                    if (outcome && outcome.saved) {
+                        showFormSuccess(Boolean(outcome.updated));
+                    } else if (outcome && outcome.error) {
+                        showFormError(outcome.error);
+                    } else {
+                        showFormError("Не удалось отправить ответ. Проверьте интернет и попробуйте ещё раз или напишите нам в Telegram: @antoniolga_bot.");
+                    }
                 } finally {
                     if (submitButton) submitButton.disabled = false;
                     form.removeAttribute("aria-busy");

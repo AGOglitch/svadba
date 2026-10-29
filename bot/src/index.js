@@ -25,6 +25,10 @@ export default {
       return handleSetup(request, env);
     }
 
+    if (url.pathname === "/admin/ping" && request.method === "POST") {
+      return handlePing(request, env);
+    }
+
     if (url.pathname === "/telegram" && request.method === "POST") {
       return handleTelegram(request, env);
     }
@@ -199,6 +203,35 @@ async function handleSetup(request, env) {
     },
     webhookInfo: webhookInfo.result || null
   });
+}
+
+/* ---------- diagnostics ---------- */
+
+async function handlePing(request, env) {
+  const authorization = request.headers.get("Authorization") || "";
+
+  if (!env.SETUP_SECRET || authorization !== `Bearer ${env.SETUP_SECRET}`) {
+    return json({ ok: false, error: "Forbidden" }, 403);
+  }
+
+  const text = "✅ Бот на связи. Если видишь это сообщение — уведомления и команды работают.";
+
+  const results = await Promise.all(
+    adminIds(env).map(async (chatId) => {
+      const sent = await sendMessage(env, chatId, text).catch((error) => ({
+        ok: false,
+        description: String(error)
+      }));
+
+      return {
+        chatId,
+        ok: Boolean(sent?.ok),
+        error: sent?.ok ? null : sent?.description || "unknown error"
+      };
+    })
+  );
+
+  return json({ ok: results.every((item) => item.ok), admins: results });
 }
 
 /* ---------- RSVP ---------- */

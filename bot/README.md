@@ -161,4 +161,22 @@ wrangler tail antoniolga-bot
 - Webhook принимает запросы только с секретным заголовком Telegram.
 - `/winner`, `/guests`, `/export` доступны только ID из `ADMIN_IDS`.
 - В анкете есть honeypot-поле `website`; заполненные ботом заявки игнорируются.
+- `/setup` и `/admin/ping` защищены `Authorization: Bearer <SETUP_SECRET>`.
 - Не публикуйте CSV с гостями и токен бота в открытых репозиториях.
+
+## Диагностика
+
+```powershell
+$setup = (Get-Content C:\Temp\opencode\telegram-setup-secret.txt -Raw).Trim()
+
+# проверка базы, токена и кода
+Invoke-RestMethod "https://antoniolga-bot.agoglitch.workers.dev/health"
+
+# тестовое сообщение администраторам
+Invoke-RestMethod "https://antoniolga-bot.agoglitch.workers.dev/admin/ping" `
+  -Method Post `
+  -Headers @{ Authorization = "Bearer $setup" } `
+  -Body "{}"
+```
+
+`/admin/ping` вернёт `ok: true`, если Telegram принял сообщение. Если админ ещё не нажал Start у бота, будет ошибка `chat not found`.

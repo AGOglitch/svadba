@@ -1,0 +1,17 @@
+name = "antoniolga-bot"
+main = "src/index.js"
+compatibility_date = "2026-10-29"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "antoniolga-bot"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[vars]
+SITE_ORIGIN = "https://antoniolga.ru"
+CONTEST_CODE = "DOBBY-1612"
+FORMSPREE_FORM_ID = "xbgggkln"

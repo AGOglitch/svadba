@@ -1,0 +1,7 @@
+bot/.dev.vars
+bot/.wrangler/
+bot/node_modules/
+*.log
+*.token
+telegram-bot-token.txt
+telegram-admin-id.txt

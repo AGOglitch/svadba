@@ -1,6 +1,8 @@
 bot/.dev.vars
 bot/.wrangler/
 bot/node_modules/
+relay/.vercel/
+relay/node_modules/
 *.log
 *.token
 telegram-bot-token.txt

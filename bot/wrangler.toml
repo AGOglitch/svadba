@@ -15,3 +15,7 @@ database_id = "8ed66c16-4a26-4537-8d3f-fdc7345d65e2"
 SITE_ORIGIN = "https://antoniolga.ru"
 CONTEST_CODE = "DOBBY-1612"
 FORMSPREE_FORM_ID = "xbgggkln"
+
+[triggers]
+# 04:00 UTC = 09:00 по Екатеринбургу — ежедневный бэкап гостей в Telegram.
+crons = ["0 4 * * *", "*/30 * * * *"]

@@ -29,11 +29,35 @@ export default {
       return handlePing(request, env);
     }
 
+    if (url.pathname === "/admin/backup" && request.method === "POST") {
+      return handleAdminBackup(request, env);
+    }
+
+    if (url.pathname === "/admin/uptime" && request.method === "POST") {
+      return handleAdminUptime(request, env);
+    }
+
     if (url.pathname === "/telegram" && request.method === "POST") {
       return handleTelegram(request, env);
     }
 
     return json({ ok: false, error: "Not found" }, 404, corsHeaders(request, env));
+  },
+
+  async scheduled(event, env, ctx) {
+    const job = String(event.cron || "");
+
+    ctx.waitUntil((async () => {
+      try {
+        if (job === "0 4 * * *") {
+          await sendDailyBackup(env);
+        } else {
+          await checkUptime(env);
+        }
+      } catch (error) {
+        console.error("Scheduled job failed", job, error);
+      }
+    })());
   }
 };
 
@@ -108,6 +132,40 @@ function clip(value, maxLength) {
   return text.length > maxLength ? text.slice(0, maxLength - 1) + "…" : text;
 }
 
+// Ключ для поиска повторной анкеты: регистр, «ё» и пробелы не важны.
+function nameKey(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function cleanPhone(value) {
+  return String(value ?? "").trim().replace(/\s+/g, " ").slice(0, 60);
+}
+
+function csvCell(value) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function buildCsv(header, rows) {
+  return "\uFEFF" + [header, ...rows]
+    .map((row) => row.map(csvCell).join(";"))
+    .join("\r\n");
+}
+
+async function getSetting(env, key) {
+  const row = await env.DB.prepare("SELECT value FROM settings WHERE key = ?").bind(key).first();
+  return row ? row.value : null;
+}
+
+async function setSetting(env, key, value) {
+  await env.DB.prepare(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+  ).bind(key, String(value)).run();
+}
+
 async function telegram(env, method, payload) {
   if (!env.BOT_TOKEN) return { ok: false, description: "BOT_TOKEN is not configured" };
 
@@ -125,6 +183,15 @@ async function sendMessage(env, chatId, text) {
     chat_id: chatId,
     text,
     parse_mode: "HTML",
+    disable_web_page_preview: true
+  });
+}
+
+// Для рассылок: обычный текст без HTML, чтобы случайные символы не ломали сообщение.
+async function sendPlain(env, chatId, text) {
+  return telegram(env, "sendMessage", {
+    chat_id: chatId,
+    text,
     disable_web_page_preview: true
   });
 }
@@ -207,10 +274,13 @@ async function handleSetup(request, env) {
 
 /* ---------- diagnostics ---------- */
 
-async function handlePing(request, env) {
+function setupAuthorized(request, env) {
   const authorization = request.headers.get("Authorization") || "";
+  return Boolean(env.SETUP_SECRET) && authorization === `Bearer ${env.SETUP_SECRET}`;
+}
 
-  if (!env.SETUP_SECRET || authorization !== `Bearer ${env.SETUP_SECRET}`) {
+async function handlePing(request, env) {
+  if (!setupAuthorized(request, env)) {
     return json({ ok: false, error: "Forbidden" }, 403);
   }
 
@@ -232,6 +302,163 @@ async function handlePing(request, env) {
   );
 
   return json({ ok: results.every((item) => item.ok), admins: results });
+}
+
+async function handleAdminBackup(request, env) {
+  if (!setupAuthorized(request, env)) {
+    return json({ ok: false, error: "Forbidden" }, 403);
+  }
+
+  const summary = await sendDailyBackup(env);
+  return json({ ok: true, ...summary });
+}
+
+async function handleAdminUptime(request, env) {
+  if (!setupAuthorized(request, env)) {
+    return json({ ok: false, error: "Forbidden" }, 403);
+  }
+
+  const result = await checkUptime(env);
+  return json(result);
+}
+
+/* ---------- мониторинг и бэкапы ---------- */
+
+function guestsCsv(rows) {
+  const header = [
+    "ID", "Дата", "Обновлена", "Имя", "Телефон или Telegram",
+    "Придёт", "Трансфер туда", "Трансфер обратно", "Пожелания"
+  ];
+
+  const body = rows.map((guest) => [
+    guest.id,
+    formatDate(guest.created_at),
+    guest.updated_at ? formatDate(guest.updated_at) : "",
+    guest.name,
+    guest.phone || "",
+    guest.attendance === "yes" ? "да" : "нет",
+    guest.transfer_to ? "да" : "нет",
+    guest.transfer_from ? "да" : "нет",
+    guest.wishes || ""
+  ]);
+
+  return buildCsv(header, body);
+}
+
+async function probe(url) {
+  const started = Date.now();
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: AbortSignal.timeout(15000)
+    });
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      ms: Date.now() - started
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      ms: Date.now() - started,
+      error: String(error)
+    };
+  }
+}
+
+async function collectHealth(env) {
+  const siteUrl = `${env.SITE_ORIGIN || "https://antoniolga.ru"}/?uptime=${Date.now()}`;
+  const site = await probe(siteUrl);
+
+  let db;
+
+  try {
+    const row = await env.DB.prepare("SELECT COUNT(*) AS count FROM guests").first();
+    db = { ok: true, guests: Number(row?.count || 0) };
+  } catch (error) {
+    db = { ok: false, error: String(error) };
+  }
+
+  return { ok: Boolean(site.ok && db.ok), site, db };
+}
+
+async function checkUptime(env) {
+  const health = await collectHealth(env);
+  const state = health.ok ? "up" : "down";
+  const previous = (await getSetting(env, "uptime_state")) || "up";
+
+  let notified = false;
+
+  if (state !== previous) {
+    const text = state === "up"
+      ? "✅ Сайт снова доступен. Проверка восстановилась."
+      : [
+          "⚠️ <b>Сайт недоступен</b>",
+          "",
+          `<b>Сайт:</b> ${health.site.status || "нет ответа"} (${health.site.ms} мс)`,
+          `<b>База:</b> ${health.db.ok ? "ок" : "ошибка"}`,
+          health.site.error ? `<b>Ошибка:</b> ${escapeHtml(health.site.error)}` : ""
+        ].filter(Boolean).join("\n");
+
+    await notifyAdmins(env, text);
+    await setSetting(env, "uptime_state", state);
+    notified = true;
+  }
+
+  return { ok: health.ok, state, previous, notified, site: health.site, db: health.db };
+}
+
+async function sendDailyBackup(env) {
+  const { results } = await env.DB.prepare(
+    `SELECT id, created_at, updated_at, name, phone, attendance, transfer_to, transfer_from, wishes
+       FROM guests ORDER BY id ASC`
+  ).all();
+
+  const subscribers = await env.DB.prepare(
+    "SELECT COUNT(*) AS count FROM subscribers"
+  ).first();
+
+  const winner = await env.DB.prepare(
+    "SELECT first_name, username, created_at FROM contest WHERE is_winner = 1 LIMIT 1"
+  ).first();
+
+  const coming = results.filter((guest) => guest.attendance === "yes").length;
+  const summary = [
+    "🗂 <b>Бэкап анкет</b>",
+    `${formatDate(new Date().toISOString())}`,
+    "",
+    `<b>Анкет:</b> ${results.length}`,
+    `<b>Придут:</b> ${coming}`,
+    `<b>Не смогут:</b> ${results.length - coming}`,
+    `<b>Подписчиков бота:</b> ${Number(subscribers?.count || 0)}`,
+    winner
+      ? `<b>Победитель:</b> ${escapeHtml(winner.first_name || "гость")} · ${formatDate(winner.created_at)}`
+      : "<b>Победитель:</b> пока нет"
+  ].join("\n");
+
+  const recipients = adminIds(env);
+  const filename = `guests-${new Date().toISOString().slice(0, 10)}.csv`;
+  const delivery = { delivered: 0, failed: 0 };
+
+  await Promise.all(recipients.map(async (chatId) => {
+    try {
+      const message = await sendMessage(env, chatId, summary);
+      if (message?.ok) delivery.delivered += 1;
+      else delivery.failed += 1;
+
+      if (results.length) {
+        await sendCsv(env, chatId, guestsCsv(results), filename, `Анкеты гостей: ${results.length}`);
+      }
+    } catch (error) {
+      delivery.failed += 1;
+    }
+  }));
+
+  return { guests: results.length, ...delivery };
 }
 
 /* ---------- RSVP ---------- */
@@ -259,6 +486,7 @@ async function handleRsvp(request, env) {
   }
 
   const name = String(payload.name || "").trim().slice(0, 120);
+  const phone = cleanPhone(payload.phone);
   const attendance = payload.attendance === "yes" || payload.attendance === "no"
     ? payload.attendance
     : "";
@@ -271,26 +499,55 @@ async function handleRsvp(request, env) {
   }
 
   const createdAt = new Date().toISOString();
+  const key = nameKey(name);
+  let updated = false;
 
   try {
-    await env.DB.prepare(
-      `INSERT INTO guests (created_at, name, attendance, transfer_to, transfer_from, wishes)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).bind(createdAt, name, attendance, transferTo, transferFrom, wishes).run();
+    const existing = await env.DB.prepare(
+      "SELECT id FROM guests WHERE name_key = ?"
+    ).bind(key).first();
+
+    if (existing) {
+      await env.DB.prepare(
+        `UPDATE guests
+            SET updated_at = ?, name = ?, phone = ?, attendance = ?,
+                transfer_to = ?, transfer_from = ?, wishes = ?
+          WHERE id = ?`
+      ).bind(createdAt, name, phone, attendance, transferTo, transferFrom, wishes, existing.id).run();
+      updated = true;
+    } else {
+      try {
+        await env.DB.prepare(
+          `INSERT INTO guests
+             (created_at, updated_at, name, name_key, phone, attendance, transfer_to, transfer_from, wishes)
+           VALUES (?, '', ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(createdAt, name, key, phone, attendance, transferTo, transferFrom, wishes).run();
+      } catch (insertError) {
+        // Гонка: пока проверяли, тот же гость уже отправил анкету.
+        await env.DB.prepare(
+          `UPDATE guests
+              SET updated_at = ?, phone = ?, attendance = ?,
+                  transfer_to = ?, transfer_from = ?, wishes = ?
+            WHERE name_key = ?`
+        ).bind(createdAt, phone, attendance, transferTo, transferFrom, wishes, key).run();
+        updated = true;
+      }
+    }
   } catch (error) {
-    console.error("RSVP insert failed", error);
+    console.error("RSVP save failed", error);
     return json({ ok: false, error: "Не удалось сохранить ответ" }, 500, headers);
   }
 
   const lines = [
-    "💌 <b>Новая анкета гостя</b>",
+    updated ? "✏️ <b>Анкета обновлена</b>" : "💌 <b>Новая анкета гостя</b>",
     `<b>Имя:</b> ${escapeHtml(name)}`,
+    phone ? `<b>Связь:</b> ${escapeHtml(phone)}` : "",
     `<b>Придёт:</b> ${attendance === "yes" ? "да" : "нет"}`,
     `<b>Трансфер туда:</b> ${transferTo ? "да" : "нет"}`,
     `<b>Трансфер обратно:</b> ${transferFrom ? "да" : "нет"}`,
     `<b>Пожелания:</b> ${wishes ? escapeHtml(clip(wishes, 500)) : "—"}`,
     `<b>Время:</b> ${formatDate(createdAt)}`
-  ];
+  ].filter(Boolean);
 
   await notifyAdmins(env, lines.join("\n"));
 
@@ -315,7 +572,7 @@ async function handleRsvp(request, env) {
     }
   }
 
-  return json({ ok: true }, 200, headers);
+  return json({ ok: true, updated }, 200, headers);
 }
 
 /* ---------- Telegram webhook ---------- */
@@ -337,6 +594,8 @@ async function handleTelegram(request, env) {
 
   const message = update.message || update.edited_message;
   if (!message || !message.chat) return new Response("ok");
+
+  await rememberSubscriber(env, message);
 
   const chatId = message.chat.id;
   const userId = message.from?.id;
@@ -371,6 +630,37 @@ async function handleTelegram(request, env) {
   return new Response("ok");
 }
 
+async function rememberSubscriber(env, message) {
+  const userId = message.from?.id;
+  const chatId = message.chat?.id;
+
+  if (!userId || !chatId || message.from?.is_bot) return;
+
+  const now = new Date().toISOString();
+
+  try {
+    await env.DB.prepare(
+      `INSERT INTO subscribers (telegram_id, chat_id, username, first_name, created_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(telegram_id) DO UPDATE SET
+         chat_id = excluded.chat_id,
+         username = excluded.username,
+         first_name = excluded.first_name,
+         last_seen_at = excluded.last_seen_at`
+    ).bind(
+      userId,
+      chatId,
+      message.from?.username || null,
+      message.from?.first_name || null,
+      now,
+      now
+    ).run();
+  } catch (error) {
+    // Подписчик — вспомогательные данные: не ломаем из-за них ответ боту.
+    console.error("Subscriber upsert failed", error);
+  }
+}
+
 async function handleCommand(env, chatId, userId, text) {
   const command = text.split(/\s+/)[0].split("@")[0].toLowerCase();
 
@@ -387,7 +677,7 @@ async function handleCommand(env, chatId, userId, text) {
         "",
         "Сайт: https://antoniolga.ru",
         "",
-        "Для организаторов: /winner, /guests, /export"
+        "Для организаторов: /stats, /guests, /export, /winner, /broadcast"
       ].join("\n")
     );
     return;
@@ -419,6 +709,47 @@ async function handleCommand(env, chatId, userId, text) {
     return;
   }
 
+  if (command === "/stats") {
+    const stats = await env.DB.prepare(
+      `SELECT
+         COUNT(*) AS total,
+         SUM(CASE WHEN attendance = 'yes' THEN 1 ELSE 0 END) AS coming,
+         SUM(CASE WHEN attendance = 'no' THEN 1 ELSE 0 END) AS not_coming,
+         SUM(CASE WHEN transfer_to = 1 THEN 1 ELSE 0 END) AS transfer_to,
+         SUM(CASE WHEN transfer_from = 1 THEN 1 ELSE 0 END) AS transfer_from,
+         SUM(CASE WHEN phone <> '' THEN 1 ELSE 0 END) AS with_phone
+       FROM guests`
+    ).first();
+
+    const subscribers = await env.DB.prepare(
+      "SELECT COUNT(*) AS count FROM subscribers"
+    ).first();
+
+    const winner = await env.DB.prepare(
+      "SELECT first_name, username FROM contest WHERE is_winner = 1 LIMIT 1"
+    ).first();
+
+    const lines = [
+      "📊 <b>Статистика</b>",
+      "",
+      `<b>Анкет:</b> ${Number(stats?.total || 0)}`,
+      `<b>Придут:</b> ${Number(stats?.coming || 0)}`,
+      `<b>Не смогут:</b> ${Number(stats?.not_coming || 0)}`,
+      "",
+      `<b>Трансфер туда:</b> ${Number(stats?.transfer_to || 0)}`,
+      `<b>Трансфер обратно:</b> ${Number(stats?.transfer_from || 0)}`,
+      `<b>Оставили контакт:</b> ${Number(stats?.with_phone || 0)}`,
+      "",
+      `<b>Подписчиков бота:</b> ${Number(subscribers?.count || 0)}`,
+      winner
+        ? `<b>Победитель:</b> ${escapeHtml(winner.first_name || "гость")}${winner.username ? ` (@${escapeHtml(winner.username)})` : ""}`
+        : "<b>Победитель:</b> пока нет"
+    ];
+
+    await sendMessage(env, chatId, lines.join("\n"));
+    return;
+  }
+
   if (command === "/guests") {
     const countRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM guests").first();
     const count = Number(countRow?.count || 0);
@@ -429,7 +760,8 @@ async function handleCommand(env, chatId, userId, text) {
     }
 
     const { results } = await env.DB.prepare(
-      "SELECT id, created_at, name, attendance, transfer_to, transfer_from FROM guests ORDER BY id DESC LIMIT 20"
+      `SELECT id, created_at, updated_at, name, phone, attendance, transfer_to, transfer_from
+         FROM guests ORDER BY id DESC LIMIT 20`
     ).all();
 
     const lines = results.map((guest, index) => {
@@ -440,8 +772,9 @@ async function handleCommand(env, chatId, userId, text) {
 
       return [
         `${index + 1}. <b>${escapeHtml(guest.name)}</b> — ${guest.attendance === "yes" ? "придёт" : "не сможет"}`,
+        guest.phone ? `   связь: ${escapeHtml(guest.phone)}` : "",
         transfer ? `   трансфер: ${transfer}` : "",
-        `   ${formatDate(guest.created_at)}`
+        `   ${formatDate(guest.created_at)}${guest.updated_at ? " · обновлена" : ""}`
       ].filter(Boolean).join("\n");
     });
 
@@ -456,7 +789,8 @@ async function handleCommand(env, chatId, userId, text) {
 
   if (command === "/export") {
     const { results } = await env.DB.prepare(
-      "SELECT id, created_at, name, attendance, transfer_to, transfer_from, wishes FROM guests ORDER BY id ASC"
+      `SELECT id, created_at, updated_at, name, phone, attendance, transfer_to, transfer_from, wishes
+         FROM guests ORDER BY id ASC`
     ).all();
 
     if (!results.length) {
@@ -464,33 +798,151 @@ async function handleCommand(env, chatId, userId, text) {
       return;
     }
 
-    const header = ["ID", "Дата", "Имя", "Придёт", "Трансфер туда", "Трансфер обратно", "Пожелания"];
-    const rows = results.map((guest) => [
-      guest.id,
-      formatDate(guest.created_at),
-      guest.name,
-      guest.attendance === "yes" ? "да" : "нет",
-      guest.transfer_to ? "да" : "нет",
-      guest.transfer_from ? "да" : "нет",
-      guest.wishes
-    ]);
-
-    const csvCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
-    const csv = "\uFEFF" + [header, ...rows]
-      .map((row) => row.map(csvCell).join(";"))
-      .join("\r\n");
-
     await sendCsv(
       env,
       chatId,
-      csv,
+      guestsCsv(results),
       `guests-${new Date().toISOString().slice(0, 10)}.csv`,
       `Анкеты гостей: ${results.length}`
     );
     return;
   }
 
-  await sendMessage(env, chatId, "Неизвестная команда. Доступно: /start, /help.");
+  if (command === "/broadcast") {
+    const messageText = text.replace(/^\/broadcast(@\S+)?\s*/i, "").trim();
+
+    if (!messageText) {
+      await sendMessage(
+        env,
+        chatId,
+        "Напишите текст после команды:\n<code>/broadcast Во сколько собираемся?</code>"
+      );
+      return;
+    }
+
+    const { results } = await env.DB.prepare(
+      "SELECT COUNT(*) AS count FROM subscribers"
+    ).all();
+
+    const recipients = Number(results?.[0]?.count || 0);
+
+    if (!recipients) {
+      await sendMessage(env, chatId, "Пока нет подписчиков: гости ещё не нажали Start у бота.");
+      return;
+    }
+
+    const created = new Date().toISOString();
+    const inserted = await env.DB.prepare(
+      "INSERT INTO broadcasts (created_at, text) VALUES (?, ?)"
+    ).bind(created, messageText).run();
+
+    const id = inserted.meta?.last_row_id;
+
+    await sendMessage(
+      env,
+      chatId,
+      [
+        `📝 <b>Черновик рассылки #${id}</b>`,
+        "",
+        escapeHtml(messageText),
+        "",
+        `Получателей: <b>${recipients}</b>`,
+        "",
+        `Отправить: <code>/broadcast_send ${id}</code>`,
+        `Отменить: <code>/broadcast_cancel ${id}</code>`
+      ].join("\n")
+    );
+    return;
+  }
+
+  if (command === "/broadcast_send") {
+    const id = Number(text.split(/\s+/)[1]);
+
+    if (!id) {
+      await sendMessage(env, chatId, "Укажите номер черновика: /broadcast_send 1");
+      return;
+    }
+
+    const draft = await env.DB.prepare(
+      "SELECT id, text, sent_at FROM broadcasts WHERE id = ?"
+    ).bind(id).first();
+
+    if (!draft) {
+      await sendMessage(env, chatId, "Черновик не найден.");
+      return;
+    }
+
+    if (draft.sent_at) {
+      await sendMessage(env, chatId, `Рассылка #${id} уже отправлена.`);
+      return;
+    }
+
+    const { results } = await env.DB.prepare(
+      "SELECT chat_id FROM subscribers"
+    ).all();
+
+    let delivered = 0;
+    let failed = 0;
+
+    for (let index = 0; index < results.length; index += 5) {
+      const chunk = results.slice(index, index + 5);
+      const responses = await Promise.all(
+        chunk.map((row) => sendPlain(env, row.chat_id, draft.text).catch(() => ({ ok: false })))
+      );
+
+      responses.forEach((response) => {
+        if (response && response.ok) delivered += 1;
+        else failed += 1;
+      });
+
+      if (index + 5 < results.length) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    }
+
+    await env.DB.prepare("UPDATE broadcasts SET sent_at = ? WHERE id = ?")
+      .bind(new Date().toISOString(), id).run();
+
+    await sendMessage(
+      env,
+      chatId,
+      `📤 Рассылка #${id} отправлена.\nДоставлено: ${delivered}, ошибок: ${failed}.`
+    );
+    return;
+  }
+
+  if (command === "/broadcast_cancel") {
+    const id = Number(text.split(/\s+/)[1]);
+
+    if (!id) {
+      await sendMessage(env, chatId, "Укажите номер черновика: /broadcast_cancel 1");
+      return;
+    }
+
+    const draft = await env.DB.prepare(
+      "SELECT id, sent_at FROM broadcasts WHERE id = ?"
+    ).bind(id).first();
+
+    if (!draft) {
+      await sendMessage(env, chatId, "Черновик не найден.");
+      return;
+    }
+
+    if (draft.sent_at) {
+      await sendMessage(env, chatId, `Рассылка #${id} уже отправлена — отменить нельзя.`);
+      return;
+    }
+
+    await env.DB.prepare("DELETE FROM broadcasts WHERE id = ?").bind(id).run();
+    await sendMessage(env, chatId, `Черновик #${id} удалён.`);
+    return;
+  }
+
+  await sendMessage(
+    env,
+    chatId,
+    "Неизвестная команда. Доступно: /start, /stats, /guests, /export, /winner, /broadcast."
+  );
 }
 
 async function handleContest(env, message, photo, document) {
